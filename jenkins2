@@ -1,5 +1,10 @@
 pipeline {
     agent any
+    
+    tools {
+        maven 'Maven-3.9.6' // Name of Maven installation in Jenkins Global Tool Configuration
+    }
+    
     stages {
         stage("checkout code") {
             steps {
@@ -10,6 +15,11 @@ pipeline {
             steps {
                 sh '''
                 echo "building application"
+                
+                # Set Maven path if not in system PATH
+                export PATH=/usr/local/maven/bin:$PATH
+                
+                mvn --version
                 mvn clean package
                 echo "application built successfully"
                 '''
