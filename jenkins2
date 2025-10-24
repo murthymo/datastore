@@ -5,6 +5,13 @@ pipeline {
         stage("checkout code") {
             steps {
                 checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/murthymo/AppStore.git']])
+                
+                sh '''
+                echo "=== Files after checkout ==="
+                ls -la
+                echo "=== Looking for pom.xml ==="
+                find . -name pom.xml -type f
+                '''
             }
         }
         stage("building application") {
@@ -14,7 +21,26 @@ pipeline {
                 
                 # Maven is at /usr/local/bin/mvn
                 /usr/local/bin/mvn --version
-                /usr/local/bin/mvn clean package
+                
+                # Check if pom.xml exists in current directory
+                if [ -f "pom.xml" ]; then
+                    echo "Found pom.xml in current directory"
+                    /usr/local/bin/mvn clean package
+                else
+                    echo "pom.xml not found in current directory"
+                    echo "Searching for pom.xml..."
+                    POM_PATH=$(find . -name pom.xml -type f | head -1)
+                    if [ -n "$POM_PATH" ]; then
+                        POM_DIR=$(dirname "$POM_PATH")
+                        echo "Found pom.xml at: $POM_PATH"
+                        echo "Changing to directory: $POM_DIR"
+                        cd "$POM_DIR"
+                        /usr/local/bin/mvn clean package
+                    else
+                        echo "ERROR: No pom.xml found in workspace!"
+                        exit 1
+                    fi
+                fi
                 
                 echo "application built successfully"
                 '''
