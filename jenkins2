@@ -19,25 +19,38 @@ pipeline {
                 sh '''
                 echo "building application"
                 
-                # Maven is at /usr/local/bin/mvn
-                /usr/local/bin/mvn --version
-                
-                # Check if pom.xml exists in current directory
+                # Check if this is a Maven project
                 if [ -f "pom.xml" ]; then
-                    echo "Found pom.xml in current directory"
+                    echo "Found pom.xml - this is a Maven project"
+                    /usr/local/bin/mvn --version
                     /usr/local/bin/mvn clean package
                 else
-                    echo "pom.xml not found in current directory"
-                    echo "Searching for pom.xml..."
-                    POM_PATH=$(find . -name pom.xml -type f | head -1)
-                    if [ -n "$POM_PATH" ]; then
-                        POM_DIR=$(dirname "$POM_PATH")
-                        echo "Found pom.xml at: $POM_PATH"
-                        echo "Changing to directory: $POM_DIR"
-                        cd "$POM_DIR"
-                        /usr/local/bin/mvn clean package
+                    echo "No pom.xml found - checking for other project types..."
+                    
+                    # Check for Node.js project
+                    if [ -f "package.json" ]; then
+                        echo "Found package.json - this is a Node.js project"
+                        npm --version
+                        npm install
+                        npm run build
+                    # Check for Python project
+                    elif [ -f "requirements.txt" ] || [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
+                        echo "Found Python project files"
+                        python --version
+                        pip install -r requirements.txt || echo "No requirements.txt found"
+                        python setup.py build || echo "No setup.py found"
+                    # Check for Gradle project
+                    elif [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
+                        echo "Found build.gradle - this is a Gradle project"
+                        ./gradlew --version
+                        ./gradlew build
                     else
-                        echo "ERROR: No pom.xml found in workspace!"
+                        echo "⚠️  No recognized project files found!"
+                        echo "Repository contents:"
+                        ls -la
+                        echo ""
+                        echo "This appears to be an empty repository or contains only configuration files."
+                        echo "Please add your application code to the repository."
                         exit 1
                     fi
                 fi
