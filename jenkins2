@@ -12,11 +12,10 @@ pipeline {
                 sh '''
                 echo "building application"
                 
-                # Set Maven path if not in system PATH
-                export PATH=/usr/local/maven/bin:$PATH
+                # Maven is at /usr/local/bin/mvn
+                /usr/local/bin/mvn --version
+                /usr/local/bin/mvn clean package
                 
-                mvn --version
-                mvn clean package
                 echo "application built successfully"
                 '''
             }
