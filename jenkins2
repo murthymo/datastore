@@ -5,7 +5,15 @@ pipeline {
             steps {
                 checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/murthymo/AppStore.git']])
             }
-
+        }
+        stage("building application") {
+            steps {
+                sh '''
+                echo "building application"
+                mvn clean package
+                echo "application built successfully"
+                '''
+            }
         }
     }
 }
